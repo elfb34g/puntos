@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<head>
+    <title>tio</title>
+</head>
+
+<style>
+    body {
+        background-image: url('images/back.png');
+        display: flex;
+        background-repeat: no-repeat;
+        overflow: hidden;
+        margin: auto;
+        background-size: cover;
+    }
+
+    #today {
+        width: 100%;
+        height: auto;
+        margin: auto;
+        image-rendering: pixelated;
+        display: flex;
+    }
+
+    #white {
+        display: flex;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+    }
+
+    #puntos {
+        height: 100px;
+        width: 100%;
+        position: fixed;
+        display: flex;
+        transform: matrix(1, 0, 0, 1, 0, -100);
+        opacity: 0;
+    }
+
+    #spot {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        margin: auto;
+        opacity: 0.9;
+        scale: 1.5;
+    }
+
+    #start {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 50%;
+        text-align: center;
+        justify-content: center;
+    }
+</style>
+
+<body>
+    <img src="images/today.png" id="today">
+    <div id="puntos"> 
+        <img src="images/puntosPLACEHOLDER.png" style="margin: auto; width: 24vh; padding-top: 70vh; image-rendering: pixelated;">
+    </div>
+
+    <img src="images/spot.png" id="spot">
+
+    <canvas id="white"></canvas>
+
+    <div id="start"> 
+        <input type="button" value="hola" style="justify-content: center;" id="que hace">
+    </div> 
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/25.0.0/tween.umd.js"></script>
+    <script>
+        let today = document.getElementById('today');
+        let puntos = document.getElementById('puntos');
+        let spot = document.getElementById('spot');
+        let boton = document.getElementById('que hace');
+
+        let redoble = document.createElement('audio');
+        document.body.appendChild(redoble);
+        redoble.src = 'resoble.mp3';
+    
+        let bravo = document.createElement('audio');
+        document.body.appendChild(bravo);
+        bravo.src = 'bravo.mp3';
+
+        let canvas = document.getElementById('white');
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+        var grp = new TWEEN.Group();
+
+        boton.onclick = function() {start(); boton.remove()};
+
+        function start() {
+            redoble.play();
+
+            canvas.style.opacity = 0;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+            var shakeSpot = 2;
+            var valores = {top: 0};
+    
+            var twn = new TWEEN.Tween(valores);
+            twn.to({top: 180}, 7000);
+            twn.easing(TWEEN.Easing.Bounce.Out);
+            twn.onUpdate(function() {
+                let tweenTime = (performance.now() - twn._startTime);
+    
+                today.style.transform = "matrix(1, 0, 0, 1, 0, "+valores.top+")";
+    
+                spot.style.transform = 'translate('+(brandon()*shakeSpot)+'px, '+(brandon()*shakeSpot)+'px)';
+    
+                shakeSpot = (((tweenTime / twn._duration) / (1 / 2.75)) * 20) + 2;
+    
+                if ( ((tweenTime / twn._duration) > 1 / 2.75) && !today.src.toString().includes("images/today_broken.png")) {
+                    redoble.pause();
+                    bravo.play();
+
+                    today.src = "images/today_broken.png";
+    
+                    spot.style.opacity = 0;
+    
+                    canvas.style.opacity = 1;
+                    var flash = new TWEEN.Tween(canvas.style);
+                    flash.to({opacity: 0}, 1800);
+                    flash.easing(TWEEN.Easing.Quadratic.Out);
+                    flash.start();
+                    grp.add(flash);
+    
+                    var tioPosition = {y: 50};
+    
+                    puntos.style.opacity = 1;
+    
+                    function tiobajarsubir() {
+                        puntos.style.transform = "matrix(1, 0, 0, 1, 0, "+tioPosition.y+")";
+                    }
+    
+                    var tiobajar = new TWEEN.Tween(tioPosition);
+                    tiobajar.to({y: 100}, 900);
+                    tiobajar.easing(TWEEN.Easing.Quadratic.Out);
+                    tiobajar.start();
+                    tiobajar.onUpdate(tiobajarsubir);
+                    tiobajar.onComplete(function() {
+                        var tiosubir = new TWEEN.Tween(tioPosition);
+                        tiosubir.to({y: -100}, 2000);
+                        tiosubir.easing(TWEEN.Easing.Quadratic.InOut);
+                        tiosubir.onUpdate(tiobajarsubir);
+                        tiosubir.start();
+                        grp.add(tiosubir);
+                    });
+                    grp.add(tiobajar);
+                }
+            });
+            twn.start();
+            grp.add(twn);
+
+            boton.onclick = null;
+        }
+
+        function brandon() {
+            return Math.random()*2 - 1;
+        }
+
+        function update() {
+            grp.update();
+
+            requestAnimationFrame(update);
+        }
+
+        update();
+    </script>
+</body>
+</html>
